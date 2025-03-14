@@ -1,0 +1,34 @@
+# depslib dependency file v1.0
+1741744873 source:c:\teach1\ltnc\2024\draw.cpp
+	<iostream>
+	<thread>
+	<chrono>
+	"hangman.h"
+
+1741744870 c:\teach1\ltnc\2024\hangman.h
+	<fstream>
+	<string>
+	<vector>
+	<stdexcept>
+	<algorithm>
+
+1741880988 source:c:\teach1\ltnc\2024\hangman (1).cpp
+	<iostream>
+	"hangman.h"
+	<cstdlib>
+	<ctime>
+	<string>
+
+1741740300 source:c:\teach1\ltnc\2024\main (2).cpp
+	<iostream>
+	<string>
+	<vector>
+	<ctime>
+	<stdexcept>
+	<algorithm>
+	"hangman.h"
+	"draw.h"
+
+1741744860 c:\teach1\ltnc\2024\draw.h
+	<string>
+
