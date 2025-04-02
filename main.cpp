@@ -7,7 +7,11 @@ const int SCREEN_HEIGHT = 600;
 const int PLAYER_SPEED = 5;
 const int JUMP_FRAMES = 60;
 const int MAX_ENEMIES =10 ;
-
+const int AURA_FRAME_DELAY = 5; // Số frame trước khi đổi ảnh
+const int AURA_FRAME_COUNT = 4; // Số ảnh hào quang
+const int CHAO_COST = 20;  // Lượng năng lượng tiêu hao khi bắn chưởng
+const int CHAO_SPEED = 3; // Tốc độ di chuyển của chưởng
+const int CHAO_COOLDOWN_TIME =20;
 SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
 SDL_Texture* playerIdleTexture = nullptr;  // Ảnh nhân vật khi đứng yên
@@ -20,15 +24,19 @@ SDL_Rect exitButton = {500, 450, 200, 50};    // Nút Exit
 SDL_Texture* gameOverTexture = nullptr; // Thêm texture cho màn hình game over
 SDL_Texture* restartButtonTexture = nullptr;
 SDL_Texture* exitButtonTexture = nullptr;
-
 SDL_Rect playerRect = {100, 500, 50, 50};
+SDL_Texture* auraTextures[4];
+SDL_Texture *chaoTexture = nullptr;
+int auraFrame = 0;
+int auraTimer = 0;
 int enemySpeed = 3;
 bool movingRight = true;
 bool isGameOver = false;
 bool isJumping = false;
 bool isStopped = false;
-
+bool canShootChao = false;
 int energy = 0;        // Giá trị năng lượng hiện tại
+int chaoCooldown = 0;
 const int maxEnergy = 100; // Giới hạn tối đa của năng lượng
 bool isCharging = false; // Kiểm tra xem có đang tích lũy năng lượng không
 double jumpFrame = 0;
@@ -36,12 +44,18 @@ double jumpVelocity = -10; // Tốc độ nhảy lên
 double gravity = 0.5;        // Tốc độ rơi xuống
 double groundY = 500;      // Vị trí mặt đất của nhân vật (điều chỉnh theo ý bạn)
 double playerY = groundY;
+
 struct Enemy {
      SDL_Rect rect;
      int speed;
      bool movingRight;};
 
      std::vector<Enemy> enemies;
+struct Chao {
+    SDL_Rect rect;
+    int speed;
+};
+std::vector<Chao> chaos;
 bool initSDL() {
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cout << "SDL could not initialize! SDL_Error: " << SDL_GetError() << std::endl;
@@ -170,8 +184,25 @@ void updateEnemies() {
     // Thêm các enemy mới sau khi duyệt xong
     enemies.insert(enemies.end(), newEnemies.begin(), newEnemies.end());
 }
+void shootChao() {
+   if (energy >= CHAO_COST && chaoCooldown <= 0) {  // Chỉ bắn khi có đủ năng lượng và cooldown hết
+        Chao newChao;
+        newChao.rect.x = playerRect.x + playerRect.w;  // Bắt đầu từ vị trí nhân vật
+        newChao.rect.y = playerRect.y + playerRect.h / 2 - 10; // Căn giữa chưởng
+        newChao.rect.w = 35;  // Kích thước chưởng
+        newChao.rect.h = 22;
+        newChao.speed = CHAO_SPEED;
 
-
+        chaos.push_back(newChao);
+        energy -= CHAO_COST;  // Trừ năng lượng
+        chaoCooldown = CHAO_COOLDOWN_TIME;  // Reset cooldown sau khi bắn
+    }
+}
+void updateCooldown() {
+    if (chaoCooldown > 0) {
+        chaoCooldown--;  // Giảm cooldown mỗi frame
+    }
+}
 void handleInput(bool& running) {
     if (isStopped) return; // Nếu đã va chạm, không nhận input nữa
     const Uint8* keystate = SDL_GetKeyboardState(NULL);
@@ -216,17 +247,45 @@ void handleInput(bool& running) {
             if (e.key.keysym.sym == SDLK_RIGHT && !isJumping) {
                 playerRect.x += PLAYER_SPEED;
             }
-
             // Khi nhấn phím SPACE, bắt đầu nạp năng lượng
             if (e.key.keysym.sym == SDLK_SPACE) {
                 isCharging = true;
             }
-        }
-
-        if (e.type == SDL_KEYUP) {
+            if (e.type == SDL_KEYUP) {
             // Khi thả phím SPACE, ngừng nạp năng lượng
             if (e.key.keysym.sym == SDLK_SPACE) {
                 isCharging = false;
+            }
+            if (e.key.keysym.sym == SDLK_RETURN) {
+            if (canShootChao && energy >= CHAO_COST) {  // Kiểm tra xem có thể bắn không
+                   shootChao(); // Gọi hàm shootChao để tạo chưởng
+        energy -= CHAO_COST;  // Trừ năng lượng
+        canShootChao = false; // Đặt lại trạng thái không bắn
+                }
+        }
+        }
+    }
+}
+}
+
+void updateChaos() {
+    for (int i = chaos.size() - 1; i >= 0; i--) {
+        chaos[i].rect.x += chaos[i].speed;
+
+        // Xóa chưởng khi ra khỏi màn hình
+        if (chaos[i].rect.x > SCREEN_WIDTH) {
+            chaos.erase(chaos.begin() + i);
+        }
+    }
+}
+void checkChaoCollisions() {
+    for (size_t i = 0; i < chaos.size(); i++) {
+        for (size_t j = 0; j < enemies.size(); j++) {
+            if (checkCollision(chaos[i].rect, enemies[j].rect)) {
+                // Nếu có va chạm, xóa cả chưởng và kẻ địch
+                chaos.erase(chaos.begin() + i);
+                enemies.erase(enemies.begin() + j);
+                break; // Dừng vòng lặp nếu đã xóa
             }
         }
     }
@@ -248,7 +307,14 @@ void updateEnergy() {
             energy += 1;
         }
     }
+   if (isCharging) {
+        auraTimer++;
+        if (auraTimer >= AURA_FRAME_DELAY) {
+            auraTimer = 0;
+            auraFrame = (auraFrame + 1) % AURA_FRAME_COUNT; // Chuyển ảnh theo vòng lặp
+}
 
+   }
 }
 void updateJump() {
     if (isJumping&& !isStopped) {
@@ -307,7 +373,13 @@ void render() {
     for (const Enemy& enemy : enemies) {
        SDL_RenderCopy(renderer, enemyTexture, NULL, &enemy.rect);
     }
-
+    for (const Chao& chao : chaos) {  // Vẽ các chưởng
+            SDL_RenderCopy(renderer, chaoTexture, NULL, &chao.rect);
+        }
+    if (isCharging) {
+    SDL_Rect auraRect = {playerRect.x - 10, playerRect.y - 10, playerRect.w + 20, playerRect.h + 20};
+    SDL_RenderCopy(renderer, auraTextures[auraFrame], NULL, &auraRect);
+}
     }
      renderEnergyBar();
     SDL_RenderPresent(renderer);
@@ -323,7 +395,6 @@ void cleanUp() {
     SDL_DestroyTexture(gameOverTexture);
     SDL_DestroyTexture(restartButtonTexture);
     SDL_DestroyTexture(exitButtonTexture);
-
     IMG_Quit();
     SDL_Quit();
 }
@@ -344,15 +415,23 @@ int main(int argc, char* argv[]) {
  gameOverTexture = loadTexture("gameover.png");
  restartButtonTexture = loadTexture("restart.png"); // Thay thế bằng file của bạn
 exitButtonTexture = loadTexture("exit.png");
-
+auraTextures[0] = loadTexture("aura1.png");
+auraTextures[1] = loadTexture("aura2.png");
+auraTextures[2] = loadTexture("aura3.png");
+auraTextures[3] = loadTexture("aura4.png");
 if (!restartButtonTexture || !exitButtonTexture) {
     std::cout << "Failed to load button textures!\n";
     return -1;
 }
-
+chaoTexture = loadTexture("ki.png"); // Thay "chao.png" bằng đường dẫn đến ảnh chưởng của bạn
+if (!chaoTexture) {
+    std::cout << "Failed to load chao texture!\n";
+    return -1;
+}
 if (!gameOverTexture) return -1;
 if (!enemyTexture) return -1;
     bool running = true;
+    bool canShootChao = true;
     enemies.push_back({{200, 500, 50, 50}, 3, true}); // Thêm kẻ địch khởi tạo
    while (running) {
     handleEvents(running);
@@ -361,6 +440,8 @@ if (!enemyTexture) return -1;
     updateJump();
     updateEnemies();  // Cập nhật vị trí quái vật
     updateEnergy();
+    updateChaos();
+    updateCooldown();
  for(size_t i=0;i<enemies.size();i++){
     if (checkCollision(playerRect, enemies[i].rect)) {
     isStopped = true;
@@ -368,6 +449,11 @@ if (!enemyTexture) return -1;
     break;
 }
     }
+     if (energy >= CHAO_COST && chaoCooldown <= 0) {
+            if (SDL_GetKeyboardState(NULL)[SDL_SCANCODE_RETURN]) {  // Kiểm tra phím Enter
+                shootChao();  // Gọi hàm shootChao để bắn chưởng
+            }
+        }
     }
     render();
     SDL_Delay(16);
