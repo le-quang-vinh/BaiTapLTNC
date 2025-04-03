@@ -27,6 +27,7 @@ SDL_Texture* exitButtonTexture = nullptr;
 SDL_Rect playerRect = {100, 500, 50, 50};
 SDL_Texture* auraTextures[4];
 SDL_Texture *chaoTexture = nullptr;
+SDL_Texture* youWinTexture = nullptr;
 int auraFrame = 0;
 int auraTimer = 0;
 int enemySpeed = 3;
@@ -35,6 +36,7 @@ bool isGameOver = false;
 bool isJumping = false;
 bool isStopped = false;
 bool canShootChao = false;
+bool gameWon = false;
 int energy = 0;        // Giá trị năng lượng hiện tại
 int chaoCooldown = 0;
 const int maxEnergy = 100; // Giới hạn tối đa của năng lượng
@@ -276,20 +278,21 @@ void updateChaos() {
         if (chaos[i].rect.x > SCREEN_WIDTH) {
             chaos.erase(chaos.begin() + i);
         }
-    }
-}
-void checkChaoCollisions() {
-    for (size_t i = 0; i < chaos.size(); i++) {
-        for (size_t j = 0; j < enemies.size(); j++) {
+         for (int j = 0; j < enemies.size(); j++) {
             if (checkCollision(chaos[i].rect, enemies[j].rect)) {
-                // Nếu có va chạm, xóa cả chưởng và kẻ địch
-                chaos.erase(chaos.begin() + i);
+                // Xóa kẻ địch khi bị chưởng trúng
                 enemies.erase(enemies.begin() + j);
-                break; // Dừng vòng lặp nếu đã xóa
+                chaos.erase(chaos.begin() + i);
+                i--;  // Điều chỉnh lại chỉ mục sau khi xóa
+                break;
             }
         }
+         if (enemies.empty()) {
+        gameWon = true;
+    }
     }
 }
+
 void updateEnergy() {
        static int chargeRate = 0; // Biến đếm để kiểm soát tốc độ nạp
 
@@ -382,6 +385,10 @@ void render() {
 }
     }
      renderEnergyBar();
+      if (gameWon && youWinTexture) {
+        SDL_Rect destRect = {150, 100, 500, 300};  // Điều chỉnh vị trí và kích thước
+        SDL_RenderCopy(renderer, youWinTexture, NULL, &destRect);
+    }
     SDL_RenderPresent(renderer);
 }
 
@@ -395,6 +402,7 @@ void cleanUp() {
     SDL_DestroyTexture(gameOverTexture);
     SDL_DestroyTexture(restartButtonTexture);
     SDL_DestroyTexture(exitButtonTexture);
+    SDL_DestroyTexture(youWinTexture);
     IMG_Quit();
     SDL_Quit();
 }
@@ -428,6 +436,7 @@ if (!chaoTexture) {
     std::cout << "Failed to load chao texture!\n";
     return -1;
 }
+youWinTexture = loadTexture("youwin.png");
 if (!gameOverTexture) return -1;
 if (!enemyTexture) return -1;
     bool running = true;
