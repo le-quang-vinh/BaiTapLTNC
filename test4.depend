@@ -1,7 +1,21 @@
 # depslib dependency file v1.0
-1743688359 source:c:\teach1\ltnc\2024\test4\main.cpp
+1743832666 source:c:\teach1\ltnc\2024\test4\main.cpp
+	"game.h"
+	"gameplay.h"
+
+1743772952 source:c:\teach1\ltnc\2024\test4\game.cpp
+
+1743774098 c:\teach1\ltnc\2024\test4\game.h
 	<SDL.h>
 	<SDL_image.h>
 	<iostream>
 	<vector>
+	<SDL_mixer.h>
+
+1743832666 source:c:\teach1\ltnc\2024\test4\gameplay.cpp
+	"gameplay.h"
+	"game.h"
+
+1743832666 c:\teach1\ltnc\2024\test4\gameplay.h
+	<SDL.h>
 
