@@ -1,5 +1,4 @@
 #include "game.h"
-#include "gameplay.h"
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 600;
 const int PLAYER_SPEED = 5;
@@ -8,7 +7,7 @@ const int MAX_ENEMIES =10 ;
 const int AURA_FRAME_DELAY = 5; // Số frame trước khi đổi ảnh
 const int AURA_FRAME_COUNT = 4; // Số ảnh hào quang
 const int CHAO_COST = 20;  // Lượng năng lượng tiêu hao khi bắn chưởng
-const int CHAO_SPEED = 3; // Tốc độ di chuyển của chưởng
+const int CHAO_SPEED = 4; // Tốc độ di chuyển của chưởng
 const int CHAO_COOLDOWN_TIME =20;
 SDL_Window* window = nullptr;
 SDL_Renderer* renderer = nullptr;
@@ -72,11 +71,13 @@ void resetGame() {
     isGameOver = false;
     isStopped = false;
     isJumping = false;
+    gameWon = false;
     jumpVelocity = -10; // Đặt lại vận tốc nhảy
 
     // Xóa toàn bộ danh sách kẻ địch
     enemies.clear();
     energy =0;
+    chaos.clear();
     // Reset lại enemy ban đầu, đảm bảo không gần người chơi
     int newEnemyX;
     do {
@@ -126,7 +127,7 @@ void handleEvents(bool& running) {
             running = false;
         }
 
-        if (e.type == SDL_MOUSEBUTTONDOWN && isGameOver) {
+        if (e.type == SDL_MOUSEBUTTONDOWN && (isGameOver||gameWon)) {
             int mouseX = e.button.x;
             int mouseY = e.button.y;
 
@@ -334,7 +335,10 @@ void updateJump() {
     }
 }
 void renderEnergyBar() {
-    if( isGameOver||gameWon )return ;
+    if( isGameOver||gameWon ){
+            return ;
+    }
+    else{
     SDL_Rect energyBarOutline = {50, 50, 200, 20}; // Viền thanh năng lượng
     SDL_Rect energyBarFill = {50, 50, (energy * 200) / maxEnergy, 20}; // Thanh năng lượng theo %
 
@@ -346,9 +350,10 @@ void renderEnergyBar() {
     SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
     SDL_RenderFillRect(renderer, &energyBarFill);
 }
+}
 void initAudio() {
     if(isGameOver||gameWon) return ;
-    else {
+    else  {
     Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048);
     bgm = Mix_LoadMUS("C:\\Teach1\\LTNC\\2024\\test4\\Data\\Music\\backgroundmusic.mp3");
     if (bgm) {
@@ -359,13 +364,22 @@ void initAudio() {
 void render() {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
+    if(!gameWon){
     SDL_Rect energyBar = {50, 50, energy * 2, 20}; // Thanh năng lượng
     SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255); // Màu xanh lá
     SDL_RenderFillRect(renderer, &energyBar);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Reset màu vẽ
+    }
     if (gameWon && youWinTexture) {
         SDL_Rect destRect = {150, 100, 500, 300};  // Điều chỉnh vị trí và kích thước
         SDL_RenderCopy(renderer, youWinTexture, NULL, &destRect);
+        SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255); // Màu đỏ cho nút
+         if (restartButtonTexture) {
+            SDL_RenderCopy(renderer, restartButtonTexture, NULL, &restartButton);
+        }
+         if (exitButtonTexture) {
+            SDL_RenderCopy(renderer, exitButtonTexture, NULL, &exitButton);
+        }
     }
     else if (isGameOver) {
         SDL_RenderCopy(renderer, gameOverTexture, NULL, NULL); // Hiển thị Game Over
