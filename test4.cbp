@@ -32,8 +32,18 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="config.h" />
 		<Unit filename="game.h" />
+		<Unit filename="global.h" />
+		<Unit filename="init.cpp" />
+		<Unit filename="init.h" />
+		<Unit filename="input.cpp" />
+		<Unit filename="input.h" />
+		<Unit filename="logicgame.cpp" />
+		<Unit filename="logicgame.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="render.cpp" />
+		<Unit filename="render.h" />
 		<Extensions />
 	</Project>
 </CodeBlocks_project_file>

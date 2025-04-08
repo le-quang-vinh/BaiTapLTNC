@@ -1,6 +1,12 @@
 # depslib dependency file v1.0
-1743951627 source:c:\teach1\ltnc\2024\test4\main.cpp
+1744130749 source:c:\teach1\ltnc\2024\test4\main.cpp
 	"game.h"
+	"render.h"
+	"config.h"
+	"input.h"
+	"global.h"
+	"init.h"
+	"logicgame.h"
 
 1743772952 source:c:\teach1\ltnc\2024\test4\game.cpp
 
@@ -17,4 +23,54 @@
 
 1743832666 c:\teach1\ltnc\2024\test4\gameplay.h
 	<SDL.h>
+
+1744129804 source:c:\teach1\ltnc\2024\test4\render.cpp
+	"render.h"
+	"game.h"
+	"config.h"
+	"global.h"
+
+1744127908 c:\teach1\ltnc\2024\test4\render.h
+	<SDL.h>
+	"game.h"
+	"config.h"
+
+1744128795 c:\teach1\ltnc\2024\test4\config.h
+
+1744128283 c:\teach1\ltnc\2024\test4\input.h
+
+1744128886 source:c:\teach1\ltnc\2024\test4\input.cpp
+	"input.h"
+	"config.h"
+	"game.h"
+	<SDL.h>
+
+1744132610 c:\teach1\ltnc\2024\test4\global.h
+	<vector>
+	<SDL.h>
+	<SDL_mixer.h>
+	"global.h"
+	"render.h"
+
+1744130708 source:c:\teach1\ltnc\2024\test4\init.cpp
+	"init.h"
+	<iostream>
+	"global.h"
+	"config.h"
+
+1744129804 c:\teach1\ltnc\2024\test4\init.h
+	<SDL.h>
+	<SDL_image.h>
+	<SDL_mixer.h>
+
+1744132553 c:\teach1\ltnc\2024\test4\logicgame.h
+	<SDL.h>
+
+1744132517 source:c:\teach1\ltnc\2024\test4\logicgame.cpp
+	"logicgame.h"
+	"global.h"
+	<cstdlib>
+	<cmath>
+	"config.h"
+	"game.h"
 
